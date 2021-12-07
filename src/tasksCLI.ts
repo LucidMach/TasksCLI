@@ -15,6 +15,7 @@ $ ./task done INDEX           # Mark the incomplete item with the given index as
 $ ./task help                 # Show usage
 $ ./task report               # Statistics`;
 
+// ///////////////////////////////////////////////////////////// helper functions //
 const fetchList = <T>(path: string): T => {
   return JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
 };
@@ -22,6 +23,7 @@ const pushList = <T>(path: string, tasks: T): void => {
   fs.writeFileSync(path, JSON.stringify(tasks));
 };
 
+// ///////////////////////////////////////////////////////////////////// TasksCLI //
 switch (CLIinput[0]) {
   case "help":
     console.log(usage);
@@ -39,20 +41,19 @@ switch (CLIinput[0]) {
   }
 
   case "add": {
-    // check if priority is an number
-    if (isNaN(parseInt(CLIinput[1]))) throw "priority should be a number";
-
     // assigning a priority
     const priority = parseInt(CLIinput[1]);
+    if (isNaN(priority)) throw "priority should be a number";
     if (priority < 0) throw "priority can't be lower than 0";
 
     // assigning a task
-    if (!CLIinput[2])
+    const taskContent = CLIinput[2];
+    if (!taskContent)
       console.log("Error: Missing tasks string. Nothing added!");
     const tasks = fetchList<Task[]>("./task.json");
     const task: Task = {
       priority,
-      task: CLIinput[2],
+      task: taskContent,
     };
 
     // adding task and sorting task list
@@ -68,18 +69,19 @@ switch (CLIinput[0]) {
     const tasks = fetchList<Task[]>("./task.json");
 
     // checking scope of index
-    if (parseInt(CLIinput[1]) > tasks.length - 1) {
+    const index = CLIinput[1];
+    if (parseInt(index) > tasks.length - 1) {
       console.log(
-        `Error: item with index ${CLIinput[1]} does not exist. Nothing deleted.`
+        `Error: item with index ${index} does not exist. Nothing deleted.`
       );
       break;
     }
 
     // removing task
-    tasks.splice(parseInt(CLIinput[1]), 1);
+    tasks.splice(parseInt(index), 1);
     pushList<Task[]>("./task.json", tasks);
 
-    console.log(`Deleted Task with index: ${CLIinput[1]}`);
+    console.log(`Deleted Task with index: ${index}`);
     break;
   }
 
@@ -89,15 +91,14 @@ switch (CLIinput[0]) {
     const completed = fetchList<Task[]>("./completed.json");
 
     // checking scope of index
-    if (parseInt(CLIinput[1]) > tasks.length - 1) {
-      console.log(
-        `Error: no incomplete item with index ${CLIinput[1]} exists.`
-      );
+    const index = parseInt(CLIinput[1]);
+    if (index > tasks.length - 1) {
+      console.log(`Error: no incomplete item with index ${index} exists.`);
       break;
     }
 
     // fetching task
-    const task = tasks[parseInt(CLIinput[1])];
+    const task = tasks[index];
 
     // adding task to completed list
     completed.push(task);
@@ -105,12 +106,13 @@ switch (CLIinput[0]) {
     pushList<Task[]>("./completed.json", completed);
 
     // removing task from task list
-    tasks.splice(parseInt(CLIinput[1]), 1);
+    tasks.splice(index, 1);
     pushList<Task[]>("./task.json", tasks);
 
-    console.log(`Marked Task with index ${CLIinput[1]} as done.`);
+    console.log(`Marked Task with index ${index} as done.`);
     break;
   }
+
   case "report":
     // fetching task list
     const tasks = fetchList<Task[]>("./task.json");
